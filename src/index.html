@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <title>Maaltafels</title>
@@ -10,7 +11,126 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1976d2">
 </head>
+
 <body>
   <app-root></app-root>
+  <div class="output">
+
+  </div>
+  <script>
+    // Code goes here
+    var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition
+    var SpeechGrammarList = SpeechGrammarList || webkitSpeechGrammarList
+    var SpeechRecognitionEvent = SpeechRecognitionEvent || webkitSpeechRecognitionEvent
+    var synth = window.speechSynthesis;
+
+    var numbersMap = {
+      'nul': 0,
+      'een': 1,
+      'twee': 2,
+      'drie': 3,
+      'vier': 4,
+      'vijf': 5,
+      'zes': 6,
+      'zeven': 7,
+      'acht': 8,
+      'negen': 9,
+      'tien': 10,
+      'elf': 11,
+      'twaalf': 12,
+      'dertien': 13,
+      'veertien': 14,
+      'vijftien': 15,
+      'zestien': 16,
+      'zeventien': 17,
+      'achttien': 18,
+      'negentien': 19,
+      'twintig': 20
+    };
+    var tafels = [1, 2];
+    var numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    var grammar = '#JSGF V1.0; grammar numbers; public <number> = ' + Object.keys(numbersMap).join(' | ') + ' ;'
+    var currentTafel = 2;
+    var recognition = new SpeechRecognition();
+    var speechRecognitionList = new SpeechGrammarList();
+    speechRecognitionList.addFromString(grammar, 1);
+    recognition.grammars = speechRecognitionList;
+    //recognition.continuous = false;
+    recognition.lang = 'nl-BE';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    var body;
+
+    window.onload = function () {
+      body = document.body;
+      body.addEventListener('click', function (event) {
+        init();
+      });
+      init();
+    };
+
+    function init() {
+
+      body.setAttribute('class', '');
+
+
+
+      var diagnostic = document.querySelector('.output');
+      let tafel = 2;
+      let random = Math.floor(Math.random() * 11);
+
+      recognition.onresult = function (event) {
+        var last = event.results.length - 1;
+        var numberText = event.results[last][0].transcript;
+
+
+        let num = parseInt(numberText);
+        if (random * tafel === num) {
+          body.setAttribute('class', 'green');
+          diagnostic.textContent = 'Juist! ' + tafel + " x " + random + " = " + numberText + '.';
+        } else {
+          body.setAttribute('class', 'red');
+          diagnostic.textContent = 'Fout! ' + tafel + " x " + random + " = " + (tafel * random) + '. Jij antwoordde ' + numberText;
+        }
+        speak(diagnostic.textContent.replace(" x ", ' maal '));
+        console.log('Confidence: ' + event.results[0][0].confidence);
+      }
+
+      recognition.onspeechend = function () {
+        recognition.stop();
+      }
+
+      recognition.onnomatch = function (event) {
+        diagnostic.textContent = "Dat nummer herken ik niet";
+      }
+
+      recognition.onerror = function (event) {
+        diagnostic.textContent = 'Error occurred in recognition: ' + event.error;
+      }
+
+      recognition.start();
+
+      diagnostic.textContent = tafel + " x " + random + " = ";
+
+    }
+
+    function speak(myText) {
+      if (synth.speaking) {
+        console.error('speechSynthesis.speaking');
+        return;
+      }
+      if (myText !== '') {
+        var utterThis = new SpeechSynthesisUtterance(myText);
+        utterThis.onend = function (event) {
+          console.log('SpeechSynthesisUtterance.onend');
+        }
+        utterThis.onerror = function (event) {
+          console.error('SpeechSynthesisUtterance.onerror');
+        }
+        synth.speak(utterThis);
+      }
+    }
+  </script>
 </body>
+
 </html>
